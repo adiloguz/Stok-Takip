@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Profesyonel Stok Takip</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-grey: #adb5bd;
+
+            --font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --border-radius: 8px;
+            --input-padding-y: 10px;
+            --input-padding-x: 12px;
+
+            /* Light (Default) */
+            --bg-color: #f4f7f9; --text-color: #333; --card-bg: white;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); --border-color: #e0e0e0;
+            --header-bg: var(--primary-color); --header-text: white; --nav-bg: white;
+            --nav-icon-color: #777; --nav-icon-active-color: var(--primary-color);
+            --modal-bg: white; --modal-text-color: #333;
+            --input-bg: white; --input-border: #ced4da; --input-focus-border: var(--primary-color);
+            --placeholder-color: #999; --error-color: var(--danger-color);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a2e; --text-color: #e0e0e0; --card-bg: #2a2a45;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); --border-color: #404060;
+            --header-bg: #23233a; --header-text: #e0e0e0; --nav-bg: #23233a;
+            --nav-icon-color: #aaa; --nav-icon-active-color: var(--info-color);
+            --modal-bg: #2a2a45; --modal-text-color: #e0e0e0;
+            --input-bg: #23233a; --input-border: #404060; --input-focus-border: var(--info-color);
+            --placeholder-color: #6c758e; --error-color: #ff6b6b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font-family); background-color: var(--bg-color); color: var(--text-color);
+            display: flex; flex-direction: column; min-height: 100vh;
+            overscroll-behavior-y: contain; line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .container { padding: 15px; padding-bottom: 80px; flex-grow: 1; overflow-y: auto; }
+        header {
+            background-color: var(--header-bg); color: var(--header-text); padding: 18px 15px;
+            text-align: center; font-size: 1.4em; font-weight: 600;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top:0; z-index: 100;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        h2 { font-size: 1.3em; margin-bottom: 15px; font-weight: 600; color: var(--text-color); }
+        h3 { font-size: 1.1em; font-weight: 600; margin-bottom: 10px; }
+
+        .screen { display: none; }
+        .screen.active { display: block; animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Form Elemanları & Hata Mesajları */
+        .form-group { margin-bottom: 18px; position: relative; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.95em; }
+        .form-group input[type="text"], .form-group input[type="number"],
+        .form-group input[type="search"], .form-group select, .form-group textarea {
+            width: 100%; padding: var(--input-padding-y) var(--input-padding-x);
+            border: 1px solid var(--input-border); border-radius: var(--border-radius); font-size: 1em;
+            background-color: var(--input-bg); color: var(--text-color);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, color 0.3s ease;
+        }
+        .form-group textarea { min-height: 80px; resize: vertical;}
+        .form-group input::placeholder, .form-group textarea::placeholder { color: var(--placeholder-color); }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none; border-color: var(--input-focus-border);
+            box-shadow: 0 0 0 0.2rem var(--input-focus-border-alpha, rgba(0,123,255,.25));
+        }
+        [data-theme="dark"] .form-group input:focus, [data-theme="dark"] .form-group select:focus, [data-theme="dark"] .form-group textarea:focus {
+            box-shadow: 0 0 0 0.2rem var(--input-focus-border-alpha, rgba(23,162,184,.25));
+        }
+        .form-error-message {
+            display: none; font-size: 0.8em; color: var(--error-color); margin-top: 4px;
+        }
+        .form-group input.invalid, .form-group select.invalid, .form-group textarea.invalid {
+            border-color: var(--error-color) !important;
+        }
+        .form-group input.invalid + .form-error-message,
+        .form-group select.invalid + .form-error-message,
+        .form-group textarea.invalid + .form-error-message {
+            display: block;
+        }
+
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch input { display: none; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 28px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 20px; width: 20px;
+            left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--primary-color); }
+        [data-theme="dark"] input:checked + .slider { background-color: var(--info-color); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        /* Butonlar */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: var(--input-padding-y) 18px; font-size: 1em; font-weight: 500;
+            cursor: pointer; text-align: center; text-decoration: none;
+            border: none; border-radius: var(--border-radius);
+            transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .btn:active { transform: translateY(1px); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: #005ea6; }
+        .btn-secondary { background-color: var(--secondary-color); color: white; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-success { background-color: var(--success-color); color: white; }
+        .btn-info { background-color: var(--info-color); color: white; }
+        .btn-warning { background-color: var(--warning-color); color: black; }
+        .btn-light { background-color: var(--light-grey); color: var(--text-color);}
+        .btn-outline-primary {
+            background-color: transparent; color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+        .btn-outline-primary:hover { background-color: var(--primary-color); color: white; }
+        .btn-block { display: flex; width: 100%; margin-top: 12px; }
+        .btn-icon svg, .btn-icon img { margin-right: 8px; width: 20px; height: 20px; fill: currentColor; }
+        .btn-sm { padding: 6px 10px; font-size: 0.85em; }
+        .btn-xs { padding: 4px 8px; font-size: 0.75em; }
+        .btn-round { border-radius: 50%; padding: 8px; width: 36px; height: 36px;}
+        .btn-round svg { margin-right: 0; }
+
+        /* Ürün Listesi */
+        #productListTools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; flex-wrap: wrap; }
+        #listFilters { display: flex; gap: 10px; align-items:center; }
+        #listFilters select { padding: 8px; font-size: 0.9em; width: auto; /* Otomatik genişlik */ flex-grow: 1; /* Esnek büyüme */}
+        #activeFiltersDisplay { font-size: 0.8em; color: var(--secondary-color); margin-top:5px; text-align: right; width: 100%; }
+        
+        #productList { list-style-type: none; padding: 0; }
+        #productList li {
+            background-color: var(--card-bg); padding: 15px; margin-bottom: 12px;
+            border-radius: var(--border-radius); box-shadow: var(--card-shadow);
+            display: flex; flex-direction: column;
+            transition: background-color 0.3s ease, border-left-color 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        #productList li.low-stock { border-left-color: var(--warning-color); }
+        #productList li .product-main-info { display: flex; justify-content: space-between; align-items: flex-start; width: 100%;}
+        #productList li .info { flex-grow: 1; }
+        #productList li .info strong { display: block; font-size: 1.1em; font-weight: 600; margin-bottom: 4px; }
+        #productList li .info span { color: var(--text-color); opacity: 0.8; font-size: 0.85em; display: block; margin-bottom: 2px; }
+        #productList li .info .category-badge {
+            font-size: 0.75em; padding: 2px 6px; border-radius: 4px;
+            background-color: var(--secondary-color); color: white; display: inline-block; margin-top: 3px;
+        }
+        [data-theme="dark"] #productList li .info .category-badge { background-color: var(--light-grey); color: var(--card-bg);}
+        #productList li .info .low-stock-indicator { color: var(--warning-color); font-weight: 600; }
+        #productList li .product-actions { display: flex; gap: 8px; margin-top: 10px; align-self: flex-end; flex-wrap: wrap;} /* Esnek kaydırma */
+        .empty-message { text-align: center; margin-top: 30px; color: var(--secondary-color); font-size: 1.1em; }
+
+        /* Alt Navigasyon */
+        nav {
+            display: flex; justify-content: space-around; background-color: var(--nav-bg);
+            padding: 8px 0; box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+            position: fixed; bottom: 0; left: 0; width: 100%; z-index: 100;
+            transition: background-color 0.3s ease;
+        }
+        nav button {
+            background: none; border: none; color: var(--nav-icon-color);
+            padding: 8px 5px; cursor: pointer; font-size: 0.75em;
+            display: flex; flex-direction: column; align-items: center; flex-grow: 1;
+            transition: color 0.2s ease;
+        }
+        nav button.active { color: var(--nav-icon-active-color); font-weight: 600; }
+        nav button svg { width: 22px; height: 22px; margin-bottom: 3px; fill: currentColor; }
+
+        /* Barkod Okuyucu */
+        #barcodeScannerViewContainer { position: relative; width: 100%; max-width: 500px; margin: 0 auto 15px auto; border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--card-shadow); }
+        #barcodeScannerView { position: relative; min-height: 250px; }
+        #barcodeScannerView video, #barcodeScannerView canvas { width: 100% !important; height: auto !important; display: block; }
+        #barcodeScannerView canvas.drawingBuffer { position: absolute; top: 0; left: 0; }
+        .scanner-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .focus-box { width: 80%; height: 40%; max-width: 350px; max-height: 180px; border: 3px solid rgba(255, 255, 255, 0.7); box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); border-radius: var(--border-radius); }
+
+        /* Modal */
+        .modal {
+            display: none; align-items: center; justify-content: center;
+            position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6); backdrop-filter: blur(3px); padding: 15px 0;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background-color: var(--modal-bg); color: var(--modal-text-color);
+            padding: 25px; border-radius: var(--border-radius);
+            width: 90%; max-width: 500px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            animation: slideInModal 0.3s ease-out;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            max-height: 90vh; overflow-y: auto;
+        }
+        @keyframes slideInModal { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 15px; border-bottom: 1px solid var(--border-color);
+            font-size: 1.25em; font-weight: 600; margin-bottom: 15px;
+        }
+        .modal-header .close-modal-btn { background: none; border: none; font-size: 1.5rem; color: var(--text-color); opacity: 0.7; cursor: pointer; padding:0 5px; }
+        .modal-header .close-modal-btn:hover { opacity: 1; }
+        .modal-body { padding-bottom: 15px; font-size: 1em;}
+        .modal-footer { text-align: right; padding-top: 15px; border-top: 1px solid var(--border-color); }
+        .modal-footer button { margin-left: 10px; }
+
+        /* Toast Bildirimleri */
+        #toastNotification {
+            position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+            background-color: rgba(40, 40, 40, 0.9); color: white;
+            padding: 12px 20px; border-radius: var(--border-radius);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 2000;
+            font-size: 0.9em; visibility: hidden; opacity: 0;
+            transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+        }
+        #toastNotification.show { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
+        #toastNotification.success { background-color: rgba(var(--success-color-rgb, 40, 167, 69), 0.95); } /* Temadan alır */
+        #toastNotification.error { background-color: rgba(var(--danger-color-rgb, 220, 53, 69), 0.95); }
+        #toastNotification.info { background-color: rgba(var(--info-color-rgb, 23, 162, 184), 0.95); }
+
+        :root {
+            --success-color-rgb: 40, 167, 69;
+            --danger-color-rgb: 220, 53, 69;
+            --info-color-rgb: 23, 162, 184;
+        }
+        [data-theme="dark"] {
+             --success-color-rgb: 40, 167, 69; /* Karanlık modda da aynı kalabilir veya ayarlanabilir */
+             --danger-color-rgb: 220, 53, 69;
+             --info-color-rgb: 23, 162, 184;
+        }
+
+
+        /* Ayarlar & İstatistikler */
+        .settings-card, .stats-card {
+            background-color: var(--card-bg); padding: 20px; margin-bottom: 20px;
+            border-radius: var(--border-radius); box-shadow: var(--card-shadow);
+            transition: background-color 0.3s ease;
+        }
+        .settings-card h3, .stats-card h3 { font-size: 1.1em; font-weight: 600; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+        .setting-item {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px; padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        [data-theme="dark"] .setting-item { border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .setting-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .setting-item label { margin-bottom: 0; }
+
+        /* Kategori Yönetimi Ayarlarda */
+        #categoryManagementList {list-style-type:none; padding:0;}
+        #categoryManagementList li {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border-bottom: 1px solid var(--border-color);
+        }
+        #categoryManagementList li:last-child { border-bottom: none; }
+        [data-theme="dark"] #categoryManagementList li { border-bottom-color: rgba(255,255,255,0.1); }
+
+        .stats-item { display: flex; justify-content: space-between; padding: 8px 0; font-size: 1em; }
+        .stats-item span:first-child { font-weight: 500; }
+        .stats-item span:last-child { font-weight: 600; color: var(--primary-color); }
+        [data-theme="dark"] .stats-item span:last-child { color: var(--info-color); }
+
+        .loader { border: 5px solid var(--border-color); border-top: 5px solid var(--primary-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Hareket Geçmişi Listesi */
+        .movement-history-list { list-style-type: none; padding: 0; max-height: 300px; overflow-y: auto; }
+        .movement-history-list li { padding: 10px; border-bottom: 1px solid var(--border-color); font-size: 0.9em; }
+        .movement-history-list li:last-child { border-bottom: none; }
+        .movement-history-list .movement-date { font-size: 0.8em; color: var(--secondary-color); display: block; }
+        .movement-history-list .movement-type-in { color: var(--success-color); font-weight: bold; }
+        .movement-history-list .movement-type-out { color: var(--danger-color); font-weight: bold; }
+        .movement-history-list .movement-note { font-style: italic; color: var(--text-color); opacity: 0.7; display:block; margin-top:3px; }
+
+        /* Utility */
+        .text-center { text-align: center; } .mt-1 { margin-top: 0.5rem; } .mt-2 { margin-top: 1rem; }
+        .mb-1 { margin-bottom: 0.5rem; } .mb-2 { margin-bottom: 1rem; }
+        .d-flex { display: flex; } .align-items-center { align-items: center; } .justify-content-between { justify-content: space-between; }
+        .gap-1 { gap: 0.5rem; } .gap-2 { gap: 1rem; }
+        .w-100 { width: 100%; }
+    </style>
+</head>
+<body>
+
+    <header id="appHeader">Stok Takip</header>
+
+    <div class="container">
+        <!-- Ürün Listesi Ekranı -->
+        <div id="listScreen" class="screen active">
+            <h2>Ürün Listesi</h2>
+            <div class="form-group">
+                <input type="search" id="searchInput" placeholder="Ürün adı, barkod veya kategori...">
+            </div>
+            <div id="productListTools">
+                <div id="listFilters" class="d-flex gap-1 align-items-center">
+                    <select id="categoryFilter" title="Kategoriye Göre Filtrele">
+                        <option value="all">Tüm Kategoriler</option>
+                        {/* Kategoriler JS ile eklenecek */}
+                    </select>
+                    <select id="sortOrder" title="Sırala">
+                        <option value="updated_desc" selected>Tarih (Yeni-Eski)</option>
+                        <option value="name_asc">Ad (A-Z)</option>
+                        <option value="name_desc">Ad (Z-A)</option>
+                        <option value="quantity_asc">Miktar (Az-Çok)</option>
+                        <option value="quantity_desc">Miktar (Çok-Az)</option>
+                        <option value="price_asc">Fiyat (Ucuz-Pahalı)</option>
+                        <option value="price_desc">Fiyat (Pahalı-Ucuz)</option>
+                        <option value="updated_asc">Tarih (Eski-Yeni)</option>
+                    </select>
+                </div>
+            </div>
+            <div id="activeFiltersDisplay"></div>
+            <ul id="productList"></ul>
+            <p id="noProductsMessage" class="empty-message" style="display: none;">Henüz ürün eklenmemiş.</p>
+        </div>
+
+        <!-- Ürün Ekleme/Düzenleme Ekranı -->
+        <div id="formScreen" class="screen">
+            <h2 id="formTitle">Yeni Ürün</h2>
+            <form id="productForm">
+                <input type="hidden" id="productId">
+                <div class="form-group">
+                    <label for="productName">Ürün Adı:</label>
+                    <input type="text" id="productName" required>
+                    <span class="form-error-message" id="productNameError"></span>
+                </div>
+                <div class="form-group">
+                    <label for="productCategory">Kategori:</label>
+                    <select id="productCategory">
+                        <option value="">Kategorisiz</option>
+                        {/* Kategoriler JS ile eklenecek */}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="productQuantity">Miktar:</label>
+                    <input type="number" id="productQuantity" required min="0">
+                    <span class="form-error-message" id="productQuantityError"></span>
+                    <small id="quantityWarning" style="color: var(--warning-color); display: none;"></small>
+                </div>
+                <div class="form-group">
+                    <label for="productPrice">Fiyat (₺):</label>
+                    <input type="number" id="productPrice" step="0.01" required min="0">
+                     <span class="form-error-message" id="productPriceError"></span>
+                </div>
+                <div class="form-group">
+                    <label for="productBarcode">Barkod:</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="productBarcode" style="flex-grow: 1;">
+                        <button type="button" id="scanBarcodeForFormBtn" class="btn btn-secondary btn-icon" title="Barkod Tara">
+                             <svg viewBox="0 0 24 24"><path d="M3 6h2v12H3V6zm3 0h1V3H6v3zm1 12V3h1v15H7zM9 3h1v15H9V3zm2 0h1v15h-1V3zm2 0h1v15h-1V3zm2 0h1v15h-1V3zm3 0h1v15h-1V3zm2-3h-1v15h1V0zm1 0h2v15h-2V0z"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" id="saveProductBtn" class="btn btn-primary btn-block">
+                     <svg viewBox="0 0 24 24" width="20" height="20"><path fill="none" d="M0 0h24v24H0z"/><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+                    Kaydet
+                </button>
+                <button type="button" id="cancelFormBtn" class="btn btn-light btn-block mt-1">İptal</button>
+            </form>
+        </div>
+
+        <!-- Barkod Okuma Ekranı -->
+        <div id="scanScreen" class="screen">
+            <h2>Barkod Okuyucu</h2>
+            <div id="barcodeScannerViewContainer">
+                <div id="barcodeScannerView"></div>
+                <div class="scanner-overlay"><div class="focus-box"></div></div>
+            </div>
+            <div id="scannerLoading" class="loader" style="display: none;"></div>
+            <p id="scannerStatus" class="text-center mb-1"></p>
+            <button id="closeScannerBtn" class="btn btn-danger btn-block">Okuyucuyu Kapat</button>
+        </div>
+
+        <!-- İstatistikler Ekranı -->
+        <div id="statsScreen" class="screen">
+            <h2>İstatistikler</h2>
+            <div class="stats-card">
+                <div class="stats-item">
+                    <span>Toplam Ürün Çeşidi:</span> <span id="statsTotalProducts">0</span>
+                </div>
+                <div class="stats-item">
+                    <span>Toplam Stok Adedi:</span> <span id="statsTotalQuantity">0</span>
+                </div>
+                <div class="stats-item">
+                    <span>Tahmini Toplam Değer:</span> <span id="statsTotalValue">0.00 ₺</span>
+                </div>
+                <div class="stats-item">
+                    <span>Düşük Stoktaki Ürünler:</span> <span id="statsLowStockProducts">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ayarlar Ekranı -->
+        <div id="settingsScreen" class="screen">
+            <h2>Ayarlar</h2>
+            <div class="settings-card">
+                <h3>Genel</h3>
+                <div class="setting-item">
+                    <label for="themeToggle">Karanlık Mod:</label>
+                    <label class="switch">
+                        <input type="checkbox" id="themeToggle"> <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <label for="lowStockThreshold">Düşük Stok Eşiği:</label>
+                    <input type="number" id="lowStockThreshold" min="0" style="width: 70px; text-align: center;">
+                </div>
+            </div>
+            
+            
+            
+
+            <div class="settings-card">
+                <h3>Kategori Yönetimi</h3>
+                <div class="form-group d-flex gap-1">
+                    <input type="text" id="newCategoryName" placeholder="Yeni kategori adı..." style="flex-grow:1;">
+                    <button id="addCategoryBtn" class="btn btn-success btn-icon" title="Yeni Kategori Ekle">
+                        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                    </button>
+                </div>
+                <ul id="categoryManagementList" class="mb-0"></ul>
+                <p id="noCategoriesMessageSettings" class="empty-message" style="font-size:0.9em; margin-top:10px; display:none;">Henüz kategori eklenmemiş.</p>
+            </div>
+            
+            <div class="settings-card">
+  <button id="showModalBtn" class="open-button">Geliştirici Bilgisi</button>
+
+  <div id="devModal" class="modal">
+    <div class="modal-content">
+      <span class="close-button">&times;</span>
+      <img src="profile.jpg" alt="Profil Resmi" class="profile-img" />
+      <h2>Adil Oğız</h2>
+      <p><strong>Mobil uygulama geliştiricisi</strong></p>
+      <p>Kotlin, Flutter, JavaScript, React, Android</p>
+      <div class="socials">
+        <a href="#" title="GitHub">GitHub</a>
+        <a href="#" title="LinkedIn">LinkedIn</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .settings-card {
+    padding: 20px;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  .open-button {
+    padding: 12px 24px;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  }
+
+  .open-button:hover {
+    transform: scale(1.05);
+  }
+
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-content {
+    background: white;
+    padding: 40px 30px;
+    border-radius: 20px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    animation: fadeIn 0.3s ease;
+  }
+
+  .close-button {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+  }
+
+  .profile-img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 15px;
+    border: 4px solid #764ba2;
+  }
+
+  .modal-content h2 {
+    margin: 10px 0 5px;
+    font-size: 24px;
+    color: #333;
+  }
+
+  .modal-content p {
+    margin: 5px 0;
+    color: #555;
+  }
+
+  .socials {
+    margin-top: 15px;
+  }
+
+  .socials a {
+    margin: 0 10px;
+    color: #764ba2;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+  }
+
+  .socials a:hover {
+    color: #3f51b5;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<script>
+  const modal = document.getElementById("devModal");
+  const btn = document.getElementById("showModalBtn");
+  const closeBtn = document.querySelector(".close-button");
+
+  btn.onclick = () => {
+    modal.style.display = "flex";
+  };
+
+  closeBtn.onclick = () => {
+    modal.style.display = "none";
+  };
+
+  window.onclick = (e) => {
+    if (e.target === modal) {
+      modal.style.display = "none";
+    }
+  };
+</script>
+            
+            
+          
+            
+
+            <div class="settings-card">
+                <h3>Veri Yönetimi</h3>
+                 <button id="exportDataBtn" class="btn btn-info btn-block">
+                    <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                    Verileri Dışa Aktar (JSON)
+                 </button>
+                 <label for="importDataInput" id="importDataBtnLabel" class="btn btn-success btn-block mt-1" style="cursor:pointer;">
+                    <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm3-10.17L14.17 8H13v6h-2V8H9.83L12 5.83zM5 18h14v2H5v-2z"/></svg>
+                    Verileri İçe Aktar (JSON)
+                 </label>
+                 <input type="file" id="importDataInput" accept=".json" style="display:none;">
+                 <button id="deleteAllDataBtn" class="btn btn-danger btn-block mt-1">
+                    <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                    Tüm Verileri Sil
+                 </button>
+            </div>
+        </div>
+    </div> {/* .container kapanışı */}
+
+    <nav>
+        <button id="navHome" class="active">
+            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            Liste
+        </button>
+        <button id="navAdd">
+            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            Ekle
+        </button>
+        <button id="navScan">
+            <svg viewBox="0 0 24 24"><path d="M15 3h6v5h-2V5h-4V3zM9 3v2H5v3H3V3h6zm6 18v-2h4v-3h2v5h-6zm-6 18H3v-5h2v3h4v2zM3 11h18v2H3v-2z"/></svg>
+            Tara
+        </button>
+        <button id="navStats">
+            <svg viewBox="0 0 24 24"><path d="M16,2H8A3,3,0,0,0,5,5v14a3,3,0,0,0,3,3h8a3,3,0,0,0,3-3V5A3,3,0,0,0,16,2ZM8,4h8a1,1,0,0,1,1,1V7H7V5A1,1,0,0,1,8,4Zm8,16H8a1,1,0,0,1-1-1V9H17v10A1,1,0,0,1,16,20Z M9,12h2v5H9Zm3,0h2v3h-2Zm3-1a1,1,0,1,0-1,1A1,1,0,0,0,15,11Z"/></svg>
+            İstatistik
+        </button>
+        <button id="navSettings">
+            <svg viewBox="0 0 24 24"><path d="M19.44 12.99l-.01.02c.04-.33.07-.67.07-1.01s-.03-.68-.07-1.01l.01.02 2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.24 14.25 2 14 2h-4c-.25 0-.46.24-.49.54l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.08-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65-.01-.02c-.04.33-.07.67-.07 1.01s.03.68.07 1.01l-.01-.02-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49 1c.52.4 1.08.73 1.69.98l.38 2.65c.03.3.24.54.49.54h4c.25 0 .46-.24.49.54l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+            Ayarlar
+        </button>
+    </nav>
+
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="confirmModalTitle">Onay</span>
+                <button class="close-modal-btn" data-modal-id="confirmModal">×</button>
+            </div>
+            <div class="modal-body"><p id="confirmModalMessage"></p></div>
+            <div class="modal-footer">
+                <button id="confirmModalCancel" class="btn btn-light">İptal</button>
+                <button id="confirmModalOk" class="btn btn-danger">Evet</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="stockMovementModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="stockMovementModalTitle">Stok İşlemi</span>
+                 <button class="close-modal-btn" data-modal-id="stockMovementModal">×</button>
+            </div>
+            <form id="stockMovementForm">
+                <input type="hidden" id="movementProductId">
+                <div class="modal-body">
+                    <p>Ürün: <strong id="movementProductName"></strong></p>
+                    <p>Mevcut Miktar: <span id="movementCurrentQuantity"></span></p>
+                    <div class="form-group">
+                        <label for="movementType">İşlem Tipi:</label>
+                        <select id="movementType" required>
+                            <option value="in">Giriş (+)</option> <option value="out">Çıkış (-)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="movementQuantity">Miktar:</label>
+                        <input type="number" id="movementQuantity" min="1" required>
+                        <span class="form-error-message" id="movementQuantityError"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="movementNote">Not (Opsiyonel):</label>
+                        <textarea id="movementNote" placeholder="örn: Tedarikçiden alındı, İade edildi vb."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light close-modal-btn-footer" data-modal-id="stockMovementModal">İptal</button>
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="movementHistoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="movementHistoryModalTitle">Hareket Geçmişi</span>
+                <button class="close-modal-btn" data-modal-id="movementHistoryModal">×</button>
+            </div>
+            <div class="modal-body">
+                <h3 id="historyProductName" style="margin-bottom: 10px;"></h3>
+                <ul id="movementHistoryList" class="movement-history-list"></ul>
+                <p id="noMovementsMessageHistory" class="empty-message" style="display:none;">Bu ürün için hareket kaydı bulunmamaktadır.</p>
+            </div>
+            <div class="modal-footer">
+                 <button type="button" class="btn btn-light close-modal-btn-footer" data-modal-id="movementHistoryModal">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastNotification"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // --- DOM Elementleri ---
+    const appHeader = document.getElementById('appHeader');
+    const screens = document.querySelectorAll('.screen');
+    const navButtons = document.querySelectorAll('nav button');
+
+    const listScreen = document.getElementById('listScreen');
+    const formScreen = document.getElementById('formScreen');
+    const scanScreen = document.getElementById('scanScreen');
+    const statsScreen = document.getElementById('statsScreen');
+    const settingsScreen = document.getElementById('settingsScreen');
+
+    const productListUl = document.getElementById('productList');
+    const noProductsMessage = document.getElementById('noProductsMessage');
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilterSelect = document.getElementById('categoryFilter');
+    const sortOrderSelect = document.getElementById('sortOrder');
+    const activeFiltersDisplay = document.getElementById('activeFiltersDisplay');
+
+    const productForm = document.getElementById('productForm');
+    const formTitle = document.getElementById('formTitle');
+    const productIdInput = document.getElementById('productId');
+    const productNameInput = document.getElementById('productName');
+    const productCategorySelect = document.getElementById('productCategory');
+    const productQuantityInput = document.getElementById('productQuantity');
+    const quantityWarning = document.getElementById('quantityWarning');
+    const productPriceInput = document.getElementById('productPrice');
+    const productBarcodeInput = document.getElementById('productBarcode');
+    const scanBarcodeForFormBtn = document.getElementById('scanBarcodeForFormBtn');
+    const saveProductBtn = document.getElementById('saveProductBtn');
+    const cancelFormBtn = document.getElementById('cancelFormBtn');
+
+    const productNameError = document.getElementById('productNameError');
+    const productQuantityError = document.getElementById('productQuantityError');
+    const productPriceError = document.getElementById('productPriceError');
+
+    const barcodeScannerView = document.getElementById('barcodeScannerView');
+    const scannerLoading = document.getElementById('scannerLoading');
+    const scannerStatus = document.getElementById('scannerStatus');
+    const closeScannerBtn = document.getElementById('closeScannerBtn');
+
+    const statsTotalProducts = document.getElementById('statsTotalProducts');
+    const statsTotalQuantity = document.getElementById('statsTotalQuantity');
+    const statsTotalValue = document.getElementById('statsTotalValue');
+    const statsLowStockProducts = document.getElementById('statsLowStockProducts');
+
+    const themeToggle = document.getElementById('themeToggle');
+    const lowStockThresholdInput = document.getElementById('lowStockThreshold');
+    const newCategoryNameInput = document.getElementById('newCategoryName');
+    const addCategoryBtn = document.getElementById('addCategoryBtn');
+    const categoryManagementListUl = document.getElementById('categoryManagementList');
+    const noCategoriesMessageSettings = document.getElementById('noCategoriesMessageSettings');
+    const exportDataBtn = document.getElementById('exportDataBtn');
+    const importDataInput = document.getElementById('importDataInput');
+    const importDataBtnLabel = document.getElementById('importDataBtnLabel');
+    const deleteAllDataBtn = document.getElementById('deleteAllDataBtn');
+
+    const confirmModal = document.getElementById('confirmModal');
+    const confirmModalTitle = document.getElementById('confirmModalTitle');
+    const confirmModalMessage = document.getElementById('confirmModalMessage');
+    const confirmModalCancelBtn = document.getElementById('confirmModalCancel');
+    const confirmModalOkBtn = document.getElementById('confirmModalOk');
+
+    const stockMovementModal = document.getElementById('stockMovementModal');
+    const stockMovementForm = document.getElementById('stockMovementForm');
+    const movementProductIdInput = document.getElementById('movementProductId');
+    const movementProductNameSpan = document.getElementById('movementProductName');
+    const movementCurrentQuantitySpan = document.getElementById('movementCurrentQuantity');
+    const movementTypeSelect = document.getElementById('movementType');
+    const movementQuantityInput = document.getElementById('movementQuantity');
+    const movementNoteTextarea = document.getElementById('movementNote');
+    const movementQuantityError = document.getElementById('movementQuantityError');
+
+    const movementHistoryModal = document.getElementById('movementHistoryModal');
+    const historyProductNameHeader = document.getElementById('historyProductName');
+    const movementHistoryListUl = document.getElementById('movementHistoryList');
+    const noMovementsMessageHistory = document.getElementById('noMovementsMessageHistory');
+
+    const toastNotification = document.getElementById('toastNotification');
+    let confirmCallback = null;
+    let toastTimeout;
+
+    const navMapping = {
+        'navHome': { screen: listScreen, title: 'Ürün Listesi' },
+        'navAdd': { screen: formScreen, title: 'Yeni Ürün Ekle' }, // Bu dinamik olarak değişecek
+        'navScan': { screen: scanScreen, title: 'Barkod Tara' },
+        'navStats': { screen: statsScreen, title: 'İstatistikler' },
+        'navSettings': { screen: settingsScreen, title: 'Ayarlar' }
+    };
+
+    let products = [];
+    let settings = {
+        theme: 'light',
+        lowStockThreshold: 5,
+        categories: [],
+    };
+    let isScannerInitialized = false;
+    let currentBarcodeScanTarget = null;
+
+    // --- Yardımcı Fonksiyonlar ---
+    const generateId = () => '_' + Math.random().toString(36).substr(2, 9);
+
+    const showToast = (message, type = 'info', duration = 3000) => {
+        clearTimeout(toastTimeout);
+        toastNotification.textContent = message;
+        toastNotification.className = 'show';
+        toastNotification.classList.remove('success', 'error', 'info'); // Önceki sınıfları temizle
+        if (type === 'success') toastNotification.classList.add('success');
+        else if (type === 'error') toastNotification.classList.add('error');
+        else if (type === 'info') toastNotification.classList.add('info');
+        
+        toastTimeout = setTimeout(() => {
+            toastNotification.className = '';
+        }, duration);
+    };
+
+    const openModal = (modalId) => {
+        const modal = document.getElementById(modalId);
+        if(modal) modal.classList.add('active');
+    }
+    const closeModal = (modalId) => {
+        const modal = document.getElementById(modalId);
+        if(modal) modal.classList.remove('active');
+    }
+    document.querySelectorAll('.close-modal-btn').forEach(btn => {
+        btn.addEventListener('click', () => closeModal(btn.dataset.modalId));
+    });
+     document.querySelectorAll('.close-modal-btn-footer').forEach(btn => { // Modal footer iptal butonları
+        btn.addEventListener('click', () => closeModal(btn.dataset.modalId));
+    });
+
+    const validateInput = (inputEl, errorEl, message) => {
+        inputEl.classList.add('invalid');
+        errorEl.textContent = message;
+        errorEl.style.display = 'block';
+        inputEl.focus(); // Hatalı inputa odaklan
+    };
+    const clearInputError = (inputEl, errorEl) => {
+        inputEl.classList.remove('invalid');
+        errorEl.textContent = '';
+        errorEl.style.display = 'none';
+    };
+    const clearFormErrors = () => {
+        clearInputError(productNameInput, productNameError);
+        clearInputError(productQuantityInput, productQuantityError);
+        clearInputError(productPriceInput, productPriceError);
+    };
+
+    // --- Ekran Yönetimi ---
+    function showScreen(screenId, isAddingNew = false, editingProductName = null) {
+        let title = "Stok Takip"; // Varsayılan
+        Object.values(navMapping).forEach(mapInfo => mapInfo.screen.classList.remove('active'));
+        
+        const targetMapping = Object.values(navMapping).find(mapInfo => mapInfo.screen.id === screenId);
+        if (targetMapping) {
+            targetMapping.screen.classList.add('active');
+            title = targetMapping.title; // Navigasyondan gelen varsayılan başlık
+        } else { // Eğer doğrudan ID ile çağrılırsa (örn: form ekranı)
+            const screenElement = document.getElementById(screenId);
+            if(screenElement) screenElement.classList.add('active');
+        }
+
+        if (screenId === formScreen.id) {
+            title = isAddingNew ? "Yeni Ürün Ekle" : (editingProductName ? `Düzenle: ${editingProductName}` : "Ürünü Düzenle");
+        }
+        appHeader.textContent = title;
+
+        navButtons.forEach(btn => btn.classList.remove('active'));
+        const activeNavButtonKey = Object.keys(navMapping).find(key => navMapping[key].screen.id === screenId);
+        if (activeNavButtonKey) document.getElementById(activeNavButtonKey).classList.add('active');
+        
+        if (screenId === scanScreen.id) startBarcodeScanner();
+        else stopBarcodeScanner();
+
+        if (screenId === statsScreen.id) renderStats();
+        if (screenId === listScreen.id) renderProducts();
+        if (screenId === settingsScreen.id) renderCategoryManagementList();
+    }
+
+    // --- Veri Saklama ---
+    const loadData = () => {
+        const storedProducts = localStorage.getItem('stokTakipUrunler_v2');
+        if (storedProducts) {
+            products = JSON.parse(storedProducts);
+        } else if (localStorage.getItem('stokTakipUrunler')) { // Eski veriyi migrate et
+            const oldProducts = JSON.parse(localStorage.getItem('stokTakipUrunler'));
+            products = oldProducts.map(p => ({
+                id: p.id, name: p.name, quantity: p.quantity, price: p.price, barcode: p.barcode,
+                categoryId: "", movements: [],
+                createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+            }));
+            localStorage.removeItem('stokTakipUrunler'); // Eski anahtarı temizle
+            showToast("Verileriniz yeni formata güncellendi.", "info", 5000);
+        }
+
+        const storedSettings = localStorage.getItem('stokTakipAyarlar_v2');
+        if (storedSettings) settings = { ...settings, ...JSON.parse(storedSettings) };
+        else if (localStorage.getItem('stokTakipAyarlar')) { // Eski ayarları migrate et
+            const oldSettings = JSON.parse(localStorage.getItem('stokTakipAyarlar'));
+            settings.theme = oldSettings.theme || 'light';
+            settings.lowStockThreshold = oldSettings.lowStockThreshold || 5;
+            localStorage.removeItem('stokTakipAyarlar');
+        }
+
+        if (!Array.isArray(settings.categories)) settings.categories = [];
+
+        applySettings();
+        populateCategorySelects();
+    };
+
+    const saveData = () => {
+        products.forEach(p => p.updatedAt = new Date().toISOString());
+        localStorage.setItem('stokTakipUrunler_v2', JSON.stringify(products));
+        localStorage.setItem('stokTakipAyarlar_v2', JSON.stringify(settings));
+    };
+    
+    const applySettings = () => {
+        document.documentElement.setAttribute('data-theme', settings.theme);
+        themeToggle.checked = settings.theme === 'dark';
+        lowStockThresholdInput.value = settings.lowStockThreshold;
+    };
+
+    // --- Kategori İşlemleri ---
+    function populateCategorySelects() {
+        const sortedCategories = [...settings.categories].sort((a, b) => a.name.localeCompare(b.name));
+        const categoryOptionsHtml = sortedCategories
+            .map(cat => `<option value="${cat.id}">${cat.name}</option>`)
+            .join('');
+        
+        productCategorySelect.innerHTML = `<option value="">Kategorisiz</option>${categoryOptionsHtml}`;
+        categoryFilterSelect.innerHTML = `<option value="all">Tüm Kategoriler</option><option value="">Kategorisiz</option>${categoryOptionsHtml}`;
+    }
+
+    function renderCategoryManagementList() {
+        categoryManagementListUl.innerHTML = '';
+        if (settings.categories.length === 0) {
+            noCategoriesMessageSettings.style.display = 'block'; return;
+        }
+        noCategoriesMessageSettings.style.display = 'none';
+        const sortedCategories = [...settings.categories].sort((a, b) => a.name.localeCompare(b.name));
+        sortedCategories.forEach(cat => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span>${cat.name}</span>
+                <button class="btn btn-danger btn-xs delete-category-btn" data-id="${cat.id}" title="Kategoriyi Sil">
+                    <svg viewBox="0 0 24 24" width="14" height="14"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                </button>
+            `;
+            categoryManagementListUl.appendChild(li);
+        });
+    }
+
+    addCategoryBtn.addEventListener('click', () => {
+        const name = newCategoryNameInput.value.trim();
+        if (!name) { showToast("Kategori adı boş olamaz.", "error"); newCategoryNameInput.focus(); return; }
+        if (settings.categories.find(c => c.name.toLowerCase() === name.toLowerCase())) {
+            showToast("Bu kategori zaten mevcut.", "error"); newCategoryNameInput.focus(); return;
+        }
+        settings.categories.push({ id: generateId(), name });
+        saveData();
+        renderCategoryManagementList();
+        populateCategorySelects();
+        newCategoryNameInput.value = '';
+        showToast("Kategori eklendi.", "success");
+    });
+
+    categoryManagementListUl.addEventListener('click', e => {
+        const deleteButton = e.target.closest('.delete-category-btn');
+        if (deleteButton) {
+            const catId = deleteButton.dataset.id;
+            const categoryInUse = products.some(p => p.categoryId === catId);
+            const category = settings.categories.find(c=>c.id === catId);
+
+            if (categoryInUse) {
+                showConfirmModal(
+                    'Kategori Kullanımda',
+                    `"${category ? category.name : ''}" kategorisi bazı ürünlerde kullanılıyor. Bu kategoriyi silerseniz ilgili ürünler "Kategorisiz" olarak işaretlenecektir. Devam etmek istiyor musunuz?`,
+                    () => {
+                        products.forEach(p => { if(p.categoryId === catId) p.categoryId = ""; });
+                        settings.categories = settings.categories.filter(c => c.id !== catId);
+                        saveData();
+                        renderCategoryManagementList(); populateCategorySelects(); renderProducts();
+                        showToast("Kategori silindi, ürünler güncellendi.", "success");
+                    }, 'btn-warning', 'Evet, Sil ve Güncelle'
+                );
+            } else {
+                 showConfirmModal(
+                    'Kategoriyi Sil',
+                    `"${category ? category.name : ''}" kategorisini silmek istediğinizden emin misiniz?`,
+                    () => {
+                        settings.categories = settings.categories.filter(c => c.id !== catId);
+                        saveData();
+                        renderCategoryManagementList(); populateCategorySelects(); renderProducts();
+                        showToast("Kategori silindi.", "success");
+                    }
+                );
+            }
+        }
+    });
+    
+    // --- Stok Hareketleri ---
+    function addMovement(productId, type, quantity, note = "", skipSave = false) {
+        const productIndex = products.findIndex(p => p.id === productId);
+        if (productIndex > -1) {
+            const movement = {
+                id: generateId(), type,
+                quantity: parseFloat(quantity),
+                date: new Date().toISOString(), note
+            };
+            if (!Array.isArray(products[productIndex].movements)) products[productIndex].movements = [];
+            products[productIndex].movements.push(movement);
+
+            // Ana miktarı 'initial', 'in', 'out' tipleri için güncelle
+            if (type === 'in' || type === 'initial') {
+                products[productIndex].quantity += parseFloat(quantity);
+            } else if (type === 'out') {
+                products[productIndex].quantity -= parseFloat(quantity);
+                if (products[productIndex].quantity < 0) products[productIndex].quantity = 0;
+            }
+            // 'edit' durumunda ana miktar form submit'te güncellenir, buradaki movement sadece kayıttır.
+
+            products[productIndex].updatedAt = new Date().toISOString();
+            if(!skipSave) saveData(); // Toplu işlemlerde save'i atlamak için
+        }
+    }
+    
+    // --- Ürün Listesi İşlemleri ---
+    function renderProducts() {
+        productListUl.innerHTML = '';
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedCategoryId = categoryFilterSelect.value;
+        const sortValue = sortOrderSelect.value;
+
+        let displayProducts = [...products];
+
+        if (searchTerm) {
+            displayProducts = displayProducts.filter(p =>
+                p.name.toLowerCase().includes(searchTerm) ||
+                (p.barcode && p.barcode.includes(searchTerm)) ||
+                (p.categoryId && settings.categories.find(c=>c.id === p.categoryId)?.name.toLowerCase().includes(searchTerm))
+            );
+        }
+        if (selectedCategoryId !== "all") {
+            displayProducts = displayProducts.filter(p => p.categoryId === selectedCategoryId);
+        }
+
+        const [sortKey, sortDir] = sortValue.split('_');
+        displayProducts.sort((a, b) => {
+            let valA, valB;
+            if (sortKey === 'name') { valA = a.name.toLowerCase(); valB = b.name.toLowerCase(); }
+            else if (sortKey === 'quantity') { valA = a.quantity; valB = b.quantity; }
+            else if (sortKey === 'price') { valA = a.price; valB = b.price; }
+            else if (sortKey === 'updated') { valA = new Date(a.updatedAt); valB = new Date(b.updatedAt); }
+            else return 0; // Bilinmeyen sıralama anahtarı
+
+            if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+            if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+            return 0;
+        });
+        
+        let activeFilterText = [];
+        if (selectedCategoryId !== "all") {
+            const catName = selectedCategoryId === "" ? "Kategorisiz" : (settings.categories.find(c=>c.id === selectedCategoryId)?.name || "");
+            if (catName) activeFilterText.push(`Kategori: ${catName}`);
+        }
+        const sortOptionText = sortOrderSelect.options[sortOrderSelect.selectedIndex]?.text;
+        if (sortOptionText) activeFilterText.push(`Sıralama: ${sortOptionText}`);
+        activeFiltersDisplay.textContent = activeFilterText.length > 0 ? activeFilterText.join(' | ') : "Filtre/Sıralama Yok";
+
+        if (products.length === 0) {
+            noProductsMessage.textContent = "Henüz ürün eklenmemiş. '+' butonu ile ekleyebilirsiniz.";
+            noProductsMessage.style.display = 'block';
+        } else if (displayProducts.length === 0) {
+             noProductsMessage.textContent = `Arama/filtre kriterlerinize uygun ürün bulunamadı.`;
+             noProductsMessage.style.display = 'block';
+        } else { noProductsMessage.style.display = 'none'; }
+        
+        displayProducts.forEach(product => {
+            const li = document.createElement('li');
+            const isLow = product.quantity < settings.lowStockThreshold;
+            if (isLow) li.classList.add('low-stock');
+            const category = product.categoryId ? settings.categories.find(c => c.id === product.categoryId) : null;
+            const categoryName = category ? category.name : (product.categoryId ? "Bilinmeyen Kategori" : "Kategorisiz");
+
+            li.innerHTML = `
+                <div class="product-main-info">
+                    <div class="info">
+                        <strong>${product.name}</strong>
+                        ${product.categoryId || categoryName !== "Kategorisiz" ? `<span class="category-badge">${categoryName}</span>` : ''}
+                        <span>Miktar: ${product.quantity} ${isLow ? `<span class="low-stock-indicator">(Düşük Stok!)</span>` : ''}</span>
+                        <span>Fiyat: ${parseFloat(product.price).toFixed(2)}₺</span>
+                        ${product.barcode ? `<span>Barkod: ${product.barcode}</span>` : ''}
+                        <span style="font-size:0.75em; opacity:0.6;">Son Günc.: ${new Date(product.updatedAt).toLocaleDateString('tr-TR', { day:'2-digit', month:'2-digit', year:'numeric' })}</span>
+                    </div>
+                </div>
+                <div class="product-actions">
+                     <button class="btn btn-outline-primary btn-xs stock-action-btn" data-id="${product.id}" title="Stok İşlemi Yap">
+                        <svg viewBox="0 0 24 24" width="14" height="14"><path d="M12 4c-4.411 0-8 3.589-8 8s3.589 8 8 8 8-3.589 8-8-3.589-8-8-8zm0 14c-3.309 0-6-2.691-6-6s2.691-6 6-6 6 2.691 6 6-2.691 6-6 6z"/><path d="M11 11h-2v2h2v2h2v-2h2v-2h-2V9h-2zm0 0V9"/></svg>
+                        İşlem
+                    </button>
+                    <button class="btn btn-info btn-xs view-history-btn" data-id="${product.id}" title="Hareket Geçmişi">
+                        <svg viewBox="0 0 24 24" width="14" height="14"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/><path d="M13 7h-2v5.414l3.293 3.293 1.414-1.414L13 11.586z"/></svg>
+                        Geçmiş
+                    </button>
+                    <button class="btn btn-secondary btn-xs edit-btn" data-id="${product.id}" title="Ürünü Düzenle">
+                        <svg viewBox="0 0 24 24" width="14" height="14"><path d="M16.707 4.293a1 1 0 0 0-1.414 0L6 13.586V18h4.414l9.293-9.293a1 1 0 0 0 0-1.414l-2-2zM15 9.414l-1.5-1.5L16 5.414 17.586 7 15 9.414zM8 16v-2.586l7-7L17.586 9 10.586 16H8z"/></svg>
+                    </button>
+                    <button class="btn btn-danger btn-xs delete-btn" data-id="${product.id}" title="Ürünü Sil">
+                        <svg viewBox="0 0 24 24" width="14" height="14"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                    </button>
+                </div>`;
+            productListUl.appendChild(li);
+        });
+    }
+    searchInput.addEventListener('input', renderProducts);
+    categoryFilterSelect.addEventListener('change', renderProducts);
+    sortOrderSelect.addEventListener('change', renderProducts);
+
+    // --- Form İşlemleri ---
+    function openFormForAdd() {
+        productForm.reset(); clearFormErrors();
+        productIdInput.value = ''; quantityWarning.style.display = 'none';
+        populateCategorySelects(); productCategorySelect.value = "";
+        showScreen(formScreen.id, true);
+    }
+    function openFormForEdit(prodId) {
+        const product = products.find(p => p.id === prodId);
+        if (product) {
+            productForm.reset(); clearFormErrors();
+            productIdInput.value = product.id;
+            productNameInput.value = product.name;
+            populateCategorySelects(); productCategorySelect.value = product.categoryId || "";
+            productQuantityInput.value = product.quantity;
+            productPriceInput.value = product.price;
+            productBarcodeInput.value = product.barcode || '';
+            checkQuantityWarning(product.quantity);
+            showScreen(formScreen.id, false, product.name);
+        }
+    }
+    function checkQuantityWarning(quantity) {
+        const threshold = parseInt(settings.lowStockThreshold);
+        if (!isNaN(threshold) && quantity < threshold) {
+            quantityWarning.textContent = `Bu miktar (${quantity}), düşük stok eşiğinden (${threshold}) az.`;
+            quantityWarning.style.display = 'block';
+        } else { quantityWarning.style.display = 'none'; }
+    }
+    productQuantityInput.addEventListener('input', (e) => checkQuantityWarning(parseFloat(e.target.value) || 0));
+
+    productForm.addEventListener('submit', (e) => {
+        e.preventDefault(); clearFormErrors();
+        let isValid = true;
+        const id = productIdInput.value;
+        const name = productNameInput.value.trim();
+        const categoryId = productCategorySelect.value;
+        const quantity = parseFloat(productQuantityInput.value);
+        const price = parseFloat(productPriceInput.value);
+        const barcode = productBarcodeInput.value.trim();
+
+        if (!name) { validateInput(productNameInput, productNameError, "Ürün adı zorunludur."); isValid = false; }
+        if (isNaN(quantity) || quantity < 0) { validateInput(productQuantityInput, productQuantityError, "Geçerli bir miktar girin (0+)."); isValid = false; }
+        if (isNaN(price) || price < 0) { validateInput(productPriceInput, productPriceError, "Geçerli bir fiyat girin (0+)."); isValid = false; }
+        if (!isValid) return;
+        
+        const now = new Date().toISOString();
+        const productData = { name, categoryId, price, barcode, updatedAt: now }; // Quantity'i ayrı handle et
+
+        if (id) { // Düzenleme
+            const index = products.findIndex(p => p.id === id);
+            if (index > -1) {
+                const oldProduct = { ...products[index] }; // Orijinalin kopyası
+                products[index] = { ...products[index], ...productData }; // Diğer alanları güncelle
+                
+                // Miktar değişikliğini hareket olarak kaydet
+                if (oldProduct.quantity !== quantity) {
+                    const quantityDiff = quantity - oldProduct.quantity;
+                    addMovement(id, quantityDiff > 0 ? 'in' : 'out', Math.abs(quantityDiff), `Miktar düzenlendi: ${oldProduct.quantity} -> ${quantity}`, true); // Ana miktarı addMovement güncelleyecek, save sonra
+                    products[index].quantity = quantity; // Yeni miktarı set et (addMovement bunu yapıyordu ama emin olmak için)
+                }
+                showToast("Ürün güncellendi.", "success");
+            }
+        } else { // Yeni Ekleme
+            productData.id = generateId();
+            productData.createdAt = now;
+            productData.movements = [];
+            productData.quantity = 0; // Başlangıçta 0, sonra hareketle eklenecek
+            products.push(productData);
+            addMovement(productData.id, 'initial', quantity, "İlk kayıt", true); // Save sonra
+            showToast("Ürün eklendi.", "success");
+        }
+        saveData(); renderProducts(); showScreen(listScreen.id);
+    });
+    cancelFormBtn.addEventListener('click', () => showScreen(listScreen.id));
+
+    // Stok İşlemi Formu
+    stockMovementForm.addEventListener('submit', (e) => {
+        e.preventDefault(); clearInputError(movementQuantityInput, movementQuantityError);
+        const productId = movementProductIdInput.value;
+        const type = movementTypeSelect.value;
+        const quantity = parseFloat(movementQuantityInput.value);
+        const note = movementNoteTextarea.value.trim();
+        const product = products.find(p => p.id === productId);
+
+        if (isNaN(quantity) || quantity <= 0) { validateInput(movementQuantityInput, movementQuantityError, "Miktar 0'dan büyük olmalı."); return; }
+        if (type === 'out' && product && quantity > product.quantity) {
+            validateInput(movementQuantityInput, movementQuantityError, `Çıkış miktarı (${quantity}) mevcut stoktan (${product.quantity}) fazla olamaz.`); return;
+        }
+        addMovement(productId, type, quantity, note);
+        showToast(`Stok işlemi: ${type === 'in' ? '+' : '-'}${quantity}`, "success");
+        closeModal('stockMovementModal'); renderProducts(); renderStats();
+    });
+
+    // --- Barkod Okuyucu ---
+    function initQuagga() {
+        if (typeof Quagga === 'undefined') { scannerStatus.textContent = "Barkod kütüphanesi yok."; scannerLoading.style.display = 'none'; return; }
+        Quagga.init({
+            inputStream : { name : "Live", type : "LiveStream", target: barcodeScannerView, constraints: { width: {min: 320}, height: {min: 240}, aspectRatio: {min: 1, max: 2}, facingMode: "environment" }},
+            decoder : { readers : ["ean_reader", "ean_8_reader", "code_128_reader", "upc_reader", "codabar_reader"] }, // Daha az ama yaygın olanlar
+            locate: true, numOfWorkers: navigator.hardwareConcurrency > 1 ? Math.floor(navigator.hardwareConcurrency / 2) : 1,
+            frequency: 10, // Saniyede deneme sayısı
+        }, (err) => {
+            if (err) {
+                console.error("QuaggaJS:", err);
+                let msg = "Kamera başlatılamadı.";
+                if (err.name === 'NotAllowedError') msg = "Kamera izni gerekli.";
+                else if (err.name === 'NotFoundError') msg = "Kamera bulunamadı.";
+                else if (err.message && err.message.includes("getUserMedia")) msg = "Tarayıcı kamera erişimini desteklemiyor veya izin verilmedi."
+                scannerStatus.textContent = msg; scannerLoading.style.display = 'none'; return;
+            }
+            isScannerInitialized = true; Quagga.start();
+            scannerLoading.style.display = 'none'; scannerStatus.textContent = "Barkodu çerçeveye getirin...";
+        });
+        Quagga.onProcessed(result => { /* Çizim işlemleri eklenebilir */ });
+        Quagga.onDetected(result => {
+            const code = result.codeResult.code;
+            if (navigator.vibrate) navigator.vibrate(100);
+            Quagga.stop();
+            if (currentBarcodeScanTarget === 'form') { productBarcodeInput.value = code; showScreen(formScreen.id); showToast(`Barkod: ${code}`, "success"); }
+            else if (currentBarcodeScanTarget === 'search') { searchInput.value = code; searchInput.dispatchEvent(new Event('input')); showScreen(listScreen.id); showToast(`"${code}" aranıyor.`, "info"); }
+            currentBarcodeScanTarget = null;
+        });
+    }
+    function startBarcodeScanner() {
+        if (typeof Quagga === 'undefined') { initQuagga(); return;} // Kütüphane yoksa tekrar dene
+        scannerLoading.style.display = 'block'; scannerStatus.textContent = "Kamera başlatılıyor...";
+        barcodeScannerView.innerHTML = '';
+        if (isScannerInitialized && Quagga.initialized) { Quagga.start(); scannerLoading.style.display = 'none'; scannerStatus.textContent = "Barkodu çerçeveye getirin..."; }
+        else { isScannerInitialized = false; initQuagga(); }
+    }
+    function stopBarcodeScanner() {
+        if (isScannerInitialized && typeof Quagga !== 'undefined' && Quagga.initialized) {
+            Quagga.stop(); scannerStatus.textContent = "Okuyucu kapalı.";
+        }
+    }
+
+    // --- İstatistikler ---
+    function renderStats() {
+        statsTotalProducts.textContent = products.length;
+        statsTotalQuantity.textContent = products.reduce((sum, p) => sum + p.quantity, 0);
+        statsTotalValue.textContent = `${products.reduce((sum, p) => sum + (p.quantity * p.price), 0).toFixed(2)} ₺`;
+        statsLowStockProducts.textContent = products.filter(p => p.quantity < settings.lowStockThreshold).length;
+    }
+
+    // --- Ayarlar ---
+    themeToggle.addEventListener('change', (e) => { settings.theme = e.target.checked ? 'dark' : 'light'; applySettings(); saveData(); });
+    lowStockThresholdInput.addEventListener('change', (e) => {
+        const threshold = parseInt(e.target.value);
+        if (!isNaN(threshold) && threshold >= 0) { settings.lowStockThreshold = threshold; saveData(); renderProducts(); showToast("Düşük stok eşiği güncellendi.", "success"); }
+        else { e.target.value = settings.lowStockThreshold; showToast("Geçersiz eşik değeri.", "error"); }
+    });
+    exportDataBtn.addEventListener('click', () => {
+        if(products.length === 0) { showToast("Dışa aktarılacak veri yok.", "info"); return; }
+        const dataStr = JSON.stringify({ products, settings });
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        const exportFileDefaultName = `stok_takip_verileri_${new Date().toISOString().slice(0,10)}.json`;
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri); linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click(); showToast("Veriler dışa aktarıldı.", "success");
+    });
+    importDataBtnLabel.addEventListener('click', () => importDataInput.click());
+    importDataInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (importedData.products && Array.isArray(importedData.products) && importedData.settings) {
+                         showConfirmModal('Verileri İçe Aktar',
+                            `${importedData.products.length} ürün bulundu. Mevcut tüm verileriniz silinecek ve bu veriler yüklenecektir. Onaylıyor musunuz?`,
+                            () => {
+                                products = importedData.products;
+                                settings = { ...settings, ...importedData.settings }; // Temel ayarları koru, içe aktarılanları üzerine yaz
+                                if (!Array.isArray(settings.categories)) settings.categories = []; // Kategoriler dizisi olmalı
+                                saveData(); applySettings(); populateCategorySelects(); renderProducts(); renderStats(); renderCategoryManagementList();
+                                showScreen(listScreen.id); showToast("Veriler içe aktarıldı.", "success");
+                            }
+                        );
+                    } else { showToast("Geçersiz dosya formatı.", "error"); }
+                } catch (error) { showToast("Dosya okuma hatası: " + error.message, "error");}
+            };
+            reader.readAsText(file); importDataInput.value = '';
+        }
+    });
+    deleteAllDataBtn.addEventListener('click', () => {
+        showConfirmModal('Tüm Verileri Sil',
+            'UYARI: Bu işlem geri alınamaz! Tüm ürünler, kategoriler ve ayarlar kalıcı olarak silinecektir. Emin misiniz?',
+            () => {
+                products = [];
+                settings = { theme: settings.theme, lowStockThreshold: 5, categories:[] }; // Temayı koru
+                saveData(); applySettings(); populateCategorySelects(); renderProducts(); renderStats(); renderCategoryManagementList();
+                showToast("Tüm veriler silindi.", "success"); showScreen(listScreen.id);
+            }
+        );
+    });
+
+    // --- Modal İşlemleri ---
+    function showConfirmModal(title, message, callback, okBtnClass = 'btn-danger', okBtnText = 'Evet') {
+        confirmModalTitle.textContent = title; confirmModalMessage.textContent = message;
+        confirmModalOkBtn.className = `btn ${okBtnClass}`; confirmModalOkBtn.textContent = okBtnText;
+        confirmModalCancelBtn.textContent = 'İptal';
+        confirmCallback = callback; openModal('confirmModal');
+    }
+    confirmModalOkBtn.addEventListener('click', () => { if (confirmCallback) confirmCallback(); closeModal('confirmModal'); });
+    confirmModalCancelBtn.addEventListener('click', () => closeModal('confirmModal'));
+    window.addEventListener('click', (event) => { if (event.target == confirmModal) closeModal('confirmModal'); }); // Dışa tıklama
+
+    // --- Event Listeners ---
+    Object.keys(navMapping).forEach(navId => {
+        document.getElementById(navId).addEventListener('click', () => {
+            const targetScreenId = navMapping[navId].screen.id;
+            if(targetScreenId === formScreen.id) openFormForAdd();
+            else showScreen(targetScreenId);
+        });
+    });
+    scanBarcodeForFormBtn.addEventListener('click', () => { currentBarcodeScanTarget = 'form'; showScreen(scanScreen.id); });
+    closeScannerBtn.addEventListener('click', () => {
+        stopBarcodeScanner();
+        if (currentBarcodeScanTarget === 'form') showScreen(formScreen.id, productIdInput.value === '', productNameInput.value || null); // forma geri dön, durumu koru
+        else showScreen(listScreen.id);
+        currentBarcodeScanTarget = null;
+    });
+
+    productListUl.addEventListener('click', (e) => {
+        const target = e.target;
+        const editBtn = target.closest('.edit-btn');
+        const deleteBtn = target.closest('.delete-btn');
+        const stockActionBtn = target.closest('.stock-action-btn');
+        const viewHistoryBtn = target.closest('.view-history-btn');
+
+        if (editBtn) { openFormForEdit(editBtn.dataset.id); }
+        if (deleteBtn) {
+            const id = deleteBtn.dataset.id;
+            const product = products.find(p => p.id === id);
+            if (product) showConfirmModal('Ürünü Sil', `"${product.name}" adlı ürünü silmek istediğinizden emin misiniz? Bu işlem tüm hareket kayıtlarını da silecektir.`,
+                () => { products = products.filter(p => p.id !== id); saveData(); renderProducts(); renderStats(); showToast("Ürün silindi.", "success"); });
+        }
+        if (stockActionBtn) {
+            const id = stockActionBtn.dataset.id;
+            const product = products.find(p => p.id === id);
+            if (product) {
+                movementProductIdInput.value = product.id;
+                movementProductNameSpan.textContent = product.name;
+                movementCurrentQuantitySpan.textContent = product.quantity;
+                stockMovementForm.reset(); movementTypeSelect.value = 'in';
+                clearInputError(movementQuantityInput, movementQuantityError);
+                openModal('stockMovementModal'); movementQuantityInput.focus();
+            }
+        }
+        if (viewHistoryBtn) {
+            const id = viewHistoryBtn.dataset.id;
+            const product = products.find(p => p.id === id);
+            if (product) {
+                historyProductNameHeader.textContent = product.name;
+                movementHistoryListUl.innerHTML = '';
+                if (product.movements && product.movements.length > 0) {
+                    noMovementsMessageHistory.style.display = 'none';
+                    const sortedMovements = [...product.movements].sort((a,b) => new Date(b.date) - new Date(a.date));
+                    sortedMovements.forEach(mov => {
+                        const li = document.createElement('li');
+                        let typeText = '', typeClass = '';
+                        if (mov.type === 'in') { typeText = 'Giriş (+)'; typeClass = 'movement-type-in'; }
+                        else if (mov.type === 'out') { typeText = 'Çıkış (-)'; typeClass = 'movement-type-out'; }
+                        else if (mov.type === 'initial') { typeText = 'İlk Kayıt'; typeClass = 'movement-type-in';}
+                        else if (mov.type === 'edit') { typeText = 'Düzenleme Kaydı'; typeClass = '';} // Bu tip hareketler notta açıklanmalı
+                        
+                        const quantityDisplay = (mov.type === 'edit' && mov.note.includes('->')) ? '' : `: ${mov.quantity}`;
+                        li.innerHTML = `
+                            <span class="movement-date">${new Date(mov.date).toLocaleString('tr-TR', {dateStyle: 'short', timeStyle: 'short'})}</span>
+                            <strong class="${typeClass}">${typeText}${quantityDisplay}</strong>
+                            ${mov.note ? `<span class="movement-note">Not: ${mov.note}</span>` : ''}
+                        `;
+                        movementHistoryListUl.appendChild(li);
+                    });
+                } else { noMovementsMessageHistory.style.display = 'block'; }
+                openModal('movementHistoryModal');
+            }
+        }
+    });
+
+    // --- Başlangıç ---
+    loadData();
+    renderProducts();
+    showScreen(listScreen.id);
+});
+</script>
+</body>
+</html>
